@@ -4,18 +4,42 @@ Django settings for obrus_backend project.
 
 import os
 from pathlib import Path
-from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') + [
+    '.onrender.com',
+]
+
+# Database – use PostgreSQL on Render, fallback to SQLite locally
+import dj_database_url
+DATABASES = {
+    'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR}/db.sqlite3', conn_max_age=600)
+}
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (consider cloud storage for production)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Security settings for production
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Application definition
 DJANGO_APPS = [
@@ -25,7 +49,7 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',  # <--- ADDED for allauth
+    'django.contrib.sites',
 ]
 
 THIRD_PARTY_APPS = [
@@ -35,10 +59,10 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'django_filters',
     'drf_spectacular',
-    'allauth',               # <--- ADDED
-    'allauth.account',       # <--- ADDED
-    'allauth.socialaccount', # <--- ADDED
-    'allauth.socialaccount.providers.google', # <--- ADDED
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 LOCAL_APPS = [
@@ -52,8 +76,8 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# Site ID for django.contrib.sites (required by allauth)
-SITE_ID = 2  # <--- ADDED
+# Site ID: we'll use 1 and update the domain later (via admin or shell)
+SITE_ID = 1
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -62,7 +86,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',   # <--- ADD THIS LINE
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -80,21 +104,12 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            #    'allauth.account.context_processors.account',   # <--- ADDED (optional, for allauth)
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-# Database - SQLite for local development
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -108,24 +123,18 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
-SESSION_COOKIE_DOMAIN = '127.0.0.1'
-CSRF_COOKIE_DOMAIN = '127.0.0.1'
+# Cookie and session settings – no hardcoded domain
+SESSION_COOKIE_DOMAIN = os.environ.get('SESSION_COOKIE_DOMAIN', None)
+CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', None)
 CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:8080',
     'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    os.environ.get('FRONTEND_URL', 'https://obrus-frontend.onrender.com'),
 ]
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
 CORS_ALLOW_CREDENTIALS = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
@@ -147,24 +156,6 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# JWT Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-}
-
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -172,11 +163,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4173",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
-    "https://obrus-apex.lovable.app",
+    os.environ.get('FRONTEND_URL', 'https://obrus-frontend.onrender.com'),
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-# Email Settings
+# Email Settings – use environment variables
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -188,22 +179,16 @@ ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@obrus.com')
 
 # allauth settings
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',          # default
-    'allauth.account.auth_backends.AuthenticationBackend', # allauth
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
-LOGIN_REDIRECT_URL = 'http://127.0.0.1:8080/dashboard'  # after Google login, redirect to React dashboard
-ACCOUNT_EMAIL_VERIFICATION = 'none'                      # for development (skip email confirmation)
+LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', 'http://localhost:8080/dashboard')
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
-        # If you prefer not to use the Django admin SocialApp, you can also add client_id/secret here:
-        # 'APP': {
-        #     'client_id': 'YOUR_CLIENT_ID',
-        #     'secret': 'YOUR_CLIENT_SECRET',
-        #     'key': ''
-        # }
     }
 }
 
