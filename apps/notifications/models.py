@@ -1,0 +1,52 @@
+from django.db import models
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+import uuid
+from django.db import models
+from django.conf import settings
+
+
+
+class Message(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='received_messages')
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    is_broadcast = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('service_request_created', 'Service Request Created'),
+        ('service_request_updated', 'Service Request Updated'),
+        ('job_application_created', 'Job Application Created'),
+        ('job_application_updated', 'Job Application Updated'),
+        ('general', 'General'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+
+    # Generic relation (optional)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.UUIDField(null=True, blank=True)
+    related_object = GenericForeignKey('content_type', 'object_id')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notifications'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.title}"
