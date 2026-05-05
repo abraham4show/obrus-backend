@@ -24,13 +24,25 @@ DATABASES = {
     'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR}/db.sqlite3', conn_max_age=600)
 }
 
-# Static files
+# Static & Media files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# Media files (consider cloud storage for production)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# WhiteNoise for static files in production
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # after SecurityMiddleware
+    'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 # Security settings for production
 if not DEBUG:
@@ -76,20 +88,8 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# Site ID: we'll use 1 and update the domain later (via admin or shell)
+# Site ID – the site with domain 'obrus-backend.onrender.com' is now id=1 (updated in shell)
 SITE_ID = 1
-
-MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 
 ROOT_URLCONF = 'config.urls'
 
@@ -129,11 +129,17 @@ AUTH_USER_MODEL = 'users.User'
 # Cookie and session settings – no hardcoded domain
 SESSION_COOKIE_DOMAIN = os.environ.get('SESSION_COOKIE_DOMAIN', None)
 CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', None)
+
+# Frontend URL (your Netlify app)
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://obrus.netlify.app')
+
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8080',
     'http://127.0.0.1:8080',
-    os.environ.get('FRONTEND_URL', 'https://obrus-frontend.onrender.com'),
+    FRONTEND_URL,
+    'https://obrus-backend.onrender.com',
 ]
+
 SESSION_COOKIE_SAMESITE = 'Lax'
 CORS_ALLOW_CREDENTIALS = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
@@ -163,9 +169,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4173",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
-    os.environ.get('FRONTEND_URL', 'https://obrus-frontend.onrender.com'),
+    FRONTEND_URL,
+    "https://obrus-backend.onrender.com",
 ]
-CORS_ALLOW_CREDENTIALS = True
 
 # Email Settings – use environment variables
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -182,7 +188,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', 'http://localhost:8080/dashboard')
+LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', f'{FRONTEND_URL}/dashboard')
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 SOCIALACCOUNT_PROVIDERS = {
