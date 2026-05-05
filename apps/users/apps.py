@@ -8,16 +8,21 @@ class UsersConfig(AppConfig):
 
 
 
+from django.apps import AppConfig
+from django.db.models.signals import post_migrate
+
 def create_default_admin(sender, **kwargs):
     from .models import User, UserRole
     if not User.objects.filter(email='admin@example.com').exists():
         admin = User.objects.create_superuser(
+            username='admin',                       # required
             email='admin@example.com',
             password='Admin123!',
             first_name='Admin',
             last_name='User',
             is_staff=True,
-            is_superuser=True
+            is_superuser=True,
+            is_staff_member=True
         )
         UserRole.objects.get_or_create(user=admin, role='admin')
 
