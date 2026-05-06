@@ -30,7 +30,8 @@ from rest_framework.response import Response
 from .models import ServiceRequest
 from .serializers import ServiceRequestSerializer
 from apps.users.models import User
-
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 
@@ -127,7 +128,9 @@ Obrus Team
             )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ServiceRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
+    # ...
     queryset = ServiceRequest.objects.all()
     serializer_class = ServiceRequestSerializer
     permission_classes = [permissions.IsAuthenticated]

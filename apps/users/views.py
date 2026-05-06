@@ -13,6 +13,8 @@ from .serializers import (
     UserProfileUpdateSerializer,
     # UserRoleSerializer
 )
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import UserRole
 
 User = get_user_model()
@@ -69,7 +71,11 @@ class LogoutView(APIView):
 
 
 
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class UserProfileView(generics.RetrieveUpdateAPIView):
+    # ...
     authentication_classes = [SessionAuthentication, JWTAuthentication]   # allow both
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileUpdateSerializer
