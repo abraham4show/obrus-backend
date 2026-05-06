@@ -50,3 +50,32 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(create_users, reverse_func),
     ]
+
+
+def ensure_admin_role(apps, schema_editor):
+    User = apps.get_model('users', 'User')
+    UserRole = apps.get_model('users', 'UserRole')
+    admin = User.objects.filter(email='admin@example.com').first()
+    if admin:
+        UserRole.objects.get_or_create(user=admin, role='admin')
+        # Also ensure admin has staff and superuser flags
+        if not admin.is_staff:
+            admin.is_staff = True
+        if not admin.is_superuser:
+            admin.is_superuser = True
+        admin.save()
+
+def reverse_func(apps, schema_editor):
+    User = apps.get_model('users', 'User')
+    UserRole = apps.get_model('users', 'UserRole')
+    admin = User.objects.filter(email='admin@example.com').first()
+    if admin:
+        UserRole.objects.filter(user=admin, role='admin').delete()
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ('users', '0001_initial'),   # adjust to the last users migration
+    ]
+    operations = [
+        migrations.RunPython(ensure_admin_role, reverse_func),
+    ]
