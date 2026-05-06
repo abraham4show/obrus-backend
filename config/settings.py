@@ -33,7 +33,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # WhiteNoise for static files in production
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # after SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -88,7 +88,6 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# Site ID – the site with domain 'obrus-backend.onrender.com' is now id=1 (updated in shell)
 SITE_ID = 1
 
 ROOT_URLCONF = 'config.urls'
@@ -126,11 +125,16 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
-# Cookie and session settings – no hardcoded domain
-SESSION_COOKIE_DOMAIN = os.environ.get('SESSION_COOKIE_DOMAIN', None)
-CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', None)
+# Cookie and session settings – cross‐origin (Netlify <-> Render)
+SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_DOMAIN = None
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+CORS_ALLOW_CREDENTIALS = True
 
-# Frontend URL (your Netlify app)
+# Frontend URL
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://obrus.netlify.app')
 
 CSRF_TRUSTED_ORIGINS = [
@@ -140,9 +144,15 @@ CSRF_TRUSTED_ORIGINS = [
     'https://obrus-backend.onrender.com',
 ]
 
-SESSION_COOKIE_SAMESITE = 'Lax'
-CORS_ALLOW_CREDENTIALS = True
-SOCIALACCOUNT_LOGIN_ON_GET = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    FRONTEND_URL,
+    "https://obrus-backend.onrender.com",
+]
 
 # Django REST Framework
 REST_FRAMEWORK = {
@@ -161,17 +171,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
-
-# CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    FRONTEND_URL,
-    "https://obrus-backend.onrender.com",
-]
 
 # Email Settings – use environment variables
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -197,6 +196,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {'access_type': 'online'},
     }
 }
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # Spectacular Settings
 SPECTACULAR_SETTINGS = {
