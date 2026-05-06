@@ -1,9 +1,10 @@
 services:
   - type: web
     name: obrus-backend
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn config.wsgi:application
+    releaseCommand: python manage.py collectstatic --noinput
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -15,10 +16,5 @@ services:
         value: false
       - key: ALLOWED_HOSTS
         value: .onrender.com
-    databases:
-      - name: obrus-db
-        databaseName: obrus_db
-        user: obrus_user
-
-
-
+      - key: FRONTEND_URL
+        value: https://obrus.netlify.app
