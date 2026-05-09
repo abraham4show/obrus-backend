@@ -141,18 +141,11 @@ CSRF_USE_SESSIONS = False
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://obrus.netlify.app')
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
     FRONTEND_URL,
     'https://obrus-backend.onrender.com',
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
     FRONTEND_URL,
     "https://obrus-backend.onrender.com",
 ]
