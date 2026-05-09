@@ -19,7 +19,8 @@ ALLOWED_HOSTS = ['obrus-backend.onrender.com', 'localhost', '127.0.0.1']
 # Database – use PostgreSQL on Render, fallback to SQLite locally
 import dj_database_url
 DATABASES = {
-    'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR}/db.sqlite3', conn_max_age=600)
+    'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR}/db.sqlite3', conn_max_age=600,
+),
 }
 
 # Static & Media files
@@ -197,6 +198,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 SOCIALACCOUNT_LOGIN_ON_GET = True
+# After social login, go straight to dashboard
+SOCIALACCOUNT_LOGIN_REDIRECT_URL = f'{FRONTEND_URL}/dashboard'
+SOCIALACCOUNT_SIGNUP_REDIRECT_URL = f'{FRONTEND_URL}/dashboard'
+ACCOUNT_LOGIN_REDIRECT_URL = f'{FRONTEND_URL}/dashboard'
 
 # Spectacular Settings
 SPECTACULAR_SETTINGS = {
