@@ -134,6 +134,8 @@ CSRF_COOKIE_SECURE = True
 CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
 
 # Frontend URL
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://obrus.netlify.app')
