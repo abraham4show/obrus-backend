@@ -6,11 +6,10 @@ User = get_user_model()
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def populate_user(self, request, sociallogin, data):
         user = super().populate_user(request, sociallogin, data)
-        # Google provides email, first_name, last_name
         user.email = data.get('email')
         user.first_name = data.get('first_name', '')
         user.last_name = data.get('last_name', '')
-        # Generate a unique username if needed
+        # Ensure username is unique
         if not user.username:
             base_username = user.email.split('@')[0]
             username = base_username
