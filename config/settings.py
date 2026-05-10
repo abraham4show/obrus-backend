@@ -19,8 +19,10 @@ ALLOWED_HOSTS = ['obrus-backend.onrender.com', 'localhost', '127.0.0.1']
 # Database – use PostgreSQL on Render, fallback to SQLite locally
 import dj_database_url
 DATABASES = {
-    'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR}/db.sqlite3', conn_max_age=600,
-),
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR}/db.sqlite3',
+        conn_max_age=600,
+    ),
 }
 
 # Static & Media files
@@ -134,8 +136,6 @@ CSRF_COOKIE_SECURE = True
 CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
-CSRF_COOKIE_HTTPONLY = False
-CSRF_USE_SESSIONS = False
 
 # Frontend URL
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://obrus.netlify.app')
@@ -183,17 +183,28 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', f'{FRONTEND_URL}/dashboard')
+
+# Use email as the primary login method (not username)
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']   # no username required
+
+LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', f'{FRONTEND_URL}/dashboard')
+
+# Social account (Google) settings
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
+        # Only request the fields we actually need for the User model
+        'FIELDS': ['email', 'first_name', 'last_name'],
     }
 }
 SOCIALACCOUNT_LOGIN_ON_GET = True
-# After social login, go straight to dashboard
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_EMAIL_REQUIRED = False
 SOCIALACCOUNT_LOGIN_REDIRECT_URL = f'{FRONTEND_URL}/dashboard'
 SOCIALACCOUNT_SIGNUP_REDIRECT_URL = f'{FRONTEND_URL}/dashboard'
 ACCOUNT_LOGIN_REDIRECT_URL = f'{FRONTEND_URL}/dashboard'
@@ -210,13 +221,32 @@ SPECTACULAR_SETTINGS = {
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 
-# Logging
+# Logging – detailed to capture OAuth and database errors
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        # Log all allauth actions (social login, signup, etc.)
+        'allauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        # Log database queries and connection issues
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Log any errors from our own apps
+        'apps': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
         },
     },
     'root': {
