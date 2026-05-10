@@ -191,7 +191,7 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']   # no username required
 ACCOUNT_USER_MODEL_USERNAME_FIELD = 'email'  # use email as the unique identifier
-#SOCIALACCOUNT_ADAPTER = 'apps.users.adapter.CustomSocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'apps.users.adapter.CustomSocialAccountAdapter'
 
 LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', f'{FRONTEND_URL}/dashboard')
 
