@@ -1,6 +1,7 @@
 import logging
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth import get_user_model
+from allauth.socialaccount.models import SocialAccount
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -10,12 +11,11 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         logger.debug(f"Populating user with data: {data}")
         user = super().populate_user(request, sociallogin, data)
 
-        # Explicitly set fields from Google
         user.email = data.get('email')
         user.first_name = data.get('first_name', '')
-        user.last_name = data.get('last_name', '')
+        user.last_name = data.get('last_name', '') or ''
 
-        # Generate a unique username (your User model requires it)
+        # Generate unique username
         base_username = user.email.split('@')[0]
         username = base_username
         counter = 1
@@ -24,18 +24,24 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             counter += 1
         user.username = username
 
-        logger.info(f"User prepared: email={user.email}, username={user.username}, first_name={user.first_name}, last_name={user.last_name}")
+        # Force save the user now (bypass allauth’s pipeline if needed)
+        try:
+            user.save()
+            logger.info(f"User saved directly: {user.email}")
+        except Exception as e:
+            logger.error(f"Direct save failed: {e}", exc_info=True)
+            raise
+
+        # Also associate the social account if not already
+        sociallogin.user = user
+        # sociallogin.account.user = user  # will be set in save()
         return user
 
     def save_user(self, request, sociallogin, form=None):
-        """Override to log any error during saving"""
         try:
             user = super().save_user(request, sociallogin, form)
-            logger.info(f"User saved successfully: {user.email}")
+            logger.info(f"User saved via allauth: {user.email}")
             return user
         except Exception as e:
-            logger.error(f"Failed to save user: {e}", exc_info=True)
+            logger.error(f"Error in save_user: {e}", exc_info=True)
             raise
-
-
-        
