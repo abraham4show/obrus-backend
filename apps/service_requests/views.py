@@ -36,8 +36,6 @@ from .serializers import ServiceRequestSerializer
 from apps.users.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from apps.users.serializers import serializer
-
 
 class IsAdminOrStaff(permissions.BasePermission):
     def has_permission(self, request, view):
