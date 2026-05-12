@@ -1,5 +1,7 @@
-import logging
+import logging 
 logger = logging.getLogger(__name__)
+import socket
+socket.setdefaulttimeout(5)  # at the top of views.py
 from rest_framework import generics, permissions, filters, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -76,6 +78,14 @@ class ServiceRequestListCreateView(generics.ListCreateAPIView):
             return [permissions.AllowAny()]
         return [IsAdminOrStaff()]
 
+@method_decorator(csrf_exempt, name='dispatch')
+class ServiceRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
+    # ...
+    queryset = ServiceRequest.objects.all()
+    serializer_class = ServiceRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'
+
 def perform_create(self, serializer):
     instance = serializer.save()
     
@@ -141,13 +151,6 @@ Obrus Team
             logger.error(f"Notification failed: {e}")
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class ServiceRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
-    # ...
-    queryset = ServiceRequest.objects.all()
-    serializer_class = ServiceRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'pk'
 
     def get_permissions(self):
         if self.request.method in ['PUT', 'PATCH', 'DELETE']:
@@ -282,20 +285,6 @@ def admin_recruitment(request):
     apps = JobApplication.objects.all().order_by('-created_at')
     serializer = JobApplicationSerializer(apps, many=True)
     return Response(serializer.data)
-
-@api_view(['GET'])
-def admin_staff_applications(request):
-    # Users who have applied to be staff (e.g., is_staff_member=True but not yet approved)
-    # We need an approval status – assume a field `is_staff_approved` on User
-    # If not, we'll return all staff users
-    if not request.user.is_authenticated or not request.user.roles.filter(role='admin').exists():
-        return Response({'error': 'Unauthorized'}, status=401)
-    # Example: users with role 'staff' but not yet approved? We'll use is_staff_approved flag
-    # For now, return all users with role 'staff' and is_staff_member=True
-    staff_users = User.objects.filter(roles__role='staff', is_staff_member=True)
-    # Return a list of dicts with id, email, full_name, etc.
-    data = [{'id': u.id, 'email': u.email, 'full_name': u.full_name, 'phone': u.phone} for u in staff_users]
-    return Response(data)
 
 @api_view(['POST'])
 def admin_staff_approve(request, user_id):

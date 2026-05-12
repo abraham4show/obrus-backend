@@ -5,7 +5,11 @@ Django settings for obrus_backend project.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
+# At the very bottom of settings.py, add this:
+import sys
+if 'EMAIL_BACKEND' not in os.environ:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("Using console email backend", file=sys.stderr)
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -177,6 +181,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'shorinwaafolabi@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@obrus.com')
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@obrus.com')
+print("EMAIL_BACKEND =", EMAIL_BACKEND)
 
 # allauth settings
 AUTHENTICATION_BACKENDS = [
