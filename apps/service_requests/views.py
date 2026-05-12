@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 from rest_framework import generics, permissions, filters, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -32,7 +34,7 @@ from .serializers import ServiceRequestSerializer
 from apps.users.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-
+from apps.users.serializers import serializer
 
 
 class IsAdminOrStaff(permissions.BasePermission):
@@ -74,9 +76,11 @@ class ServiceRequestListCreateView(generics.ListCreateAPIView):
             return [permissions.AllowAny()]
         return [IsAdminOrStaff()]
 
-    def perform_create(self, serializer):
-        instance = serializer.save()
-
+def perform_create(self, serializer):
+    instance = serializer.save()
+    
+    # Admin notification
+    try:
         admin_message = f"""A new service request has been submitted:
 
 Name: {instance.full_name}
@@ -97,7 +101,11 @@ View in admin: {settings.ALLOWED_HOSTS[0]}/admin/
             recipient_list=[settings.ADMIN_EMAIL],
             fail_silently=True,
         )
+    except Exception as e:
+        logger.error(f"Admin email failed: {e}")
 
+    # Client notification
+    try:
         client_message = f"""Dear {instance.full_name},
 
 Thank you for submitting your service request for {instance.get_service_type_display()}.
@@ -117,8 +125,11 @@ Obrus Team
             recipient_list=[instance.email],
             fail_silently=True,
         )
+    except Exception as e:
+        logger.error(f"Client email failed: {e}")
 
-        if instance.user:
+    if instance.user:
+        try:
             send_notification(
                 user=instance.user,
                 notification_type='service_request_created',
@@ -126,6 +137,8 @@ Obrus Team
                 message=f'Your {instance.get_service_type_display()} request has been received.',
                 related_object=instance
             )
+        except Exception as e:
+            logger.error(f"Notification failed: {e}")
 
 
 @method_decorator(csrf_exempt, name='dispatch')

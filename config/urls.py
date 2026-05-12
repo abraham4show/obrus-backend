@@ -6,6 +6,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from apps.core.views import get_csrf_token
 
 # Import admin views from service_requests
 from apps.service_requests.views import (
@@ -52,8 +53,7 @@ urlpatterns = [
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 path('api/admin/staff-list/', admin_staff_list, name='admin_staff_list'),
 path('api/admin/requests/', admin_requests, name='admin_requests'),
-    path('api/get-csrf-token/', GetCSRFTokenView.as_view(), name='get-csrf-token'),
-    ]
+    path('api/get-csrf-token/', get_csrf_token, name='get-csrf-token'),    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
