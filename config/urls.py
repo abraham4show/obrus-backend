@@ -18,7 +18,6 @@ from apps.service_requests.views import (
 # Import job API views
 from apps.jobs.api import JobListCreateView, JobDetailView
 from rest_framework_simplejwt.views import TokenRefreshView
-from apps.core.views import GetCSRFTokenView
 
 urlpatterns = [
     # Django admin
