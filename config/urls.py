@@ -17,7 +17,7 @@ from apps.service_requests.views import (
 # Import job API views
 from apps.jobs.api import JobListCreateView, JobDetailView
 from rest_framework_simplejwt.views import TokenRefreshView
-
+from apps.core.views import GetCSRFTokenView
 
 urlpatterns = [
     # Django admin
@@ -51,7 +51,9 @@ urlpatterns = [
     path('api/admin/jobs/<uuid:id>/', JobDetailView.as_view(), name='admin-job-detail'),
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 path('api/admin/staff-list/', admin_staff_list, name='admin_staff_list'),
-path('api/admin/requests/', admin_requests, name='admin_requests'),]
+path('api/admin/requests/', admin_requests, name='admin_requests'),
+    path('api/get-csrf-token/', GetCSRFTokenView.as_view(), name='get-csrf-token'),
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
